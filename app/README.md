@@ -138,10 +138,9 @@ Notes
 ---
 
 ## Contact / Maintainer
-Replace with your details before publishing:
-- Maintainer: YOUR NAME HERE
-- Email: your-email@example.com
-- Phone/WhatsApp: +255-XXX-XXX-XXX
+- Maintainer: AlvinDulle
+- Email: alvinchipmunk196@gmail.com
+- Phone/WhatsApp: +255-628-030-877
 
 Markdown examples:
 - Email: `[alvinchipmunk196@gmail.com](mailto:alvinchipmunk196@gmail.com)`
@@ -150,4 +149,4 @@ Markdown examples:
 ---
 
 ## License
-Add a `LICENSE` (e.g., MIT) if open sourcing.
+Add a `MIT`open sourcing.

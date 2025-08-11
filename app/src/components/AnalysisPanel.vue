@@ -12,7 +12,8 @@ const props = defineProps({
   birthYear: { type: Number, default: null },
   deathYear: { type: Number, default: null },
   isStub: { type: Boolean, default: false },
-  aiExplanation: { type: String, default: '' }
+  aiExplanation: { type: String, default: '' },
+  loading: { type: Boolean, default: false }
 })
 
 const riskLabel = (r) => {
@@ -23,7 +24,14 @@ const riskLabel = (r) => {
 </script>
 
 <template>
-  <div class="row g-3">
+  <div v-if="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Analyzing article...</p>
+  </div>
+  
+  <div v-else class="row g-3">
     <div class="col-md-4">
       <div class="card h-100">
         <div class="card-body">
@@ -87,24 +95,30 @@ const riskLabel = (r) => {
       <div class="card h-100">
         <div class="card-body">
           <h6 class="card-subtitle mb-2 text-muted">Categories</h6>
-          <ul class="mb-2">
-            <li v-for="c in categories" :key="c">{{ c }}</li>
-          </ul>
+          <div v-if="categories && categories.length > 0" class="mb-2">
+            <div v-for="c in categories" :key="c" class="badge bg-light text-dark me-1 mb-1">{{ c }}</div>
+          </div>
+          <div v-else class="text-muted mb-2">No categories found</div>
           <div class="d-flex flex-wrap gap-2">
             <span class="badge" :class="isStub ? 'bg-warning text-dark' : 'bg-secondary'">Stub: {{ isStub ? 'Yes' : 'No' }}</span>
             <span class="badge" :class="isLiving ? 'bg-success' : 'bg-secondary'">Living: {{ isLiving ? 'Yes' : 'No' }}</span>
-            <span v-if="isDead" class="badge bg-danger">Deceased<span v-if="deathYear">: {{ deathYear }}</span></span>
-            <span class="badge bg-info text-dark">Born: {{ birthYear ?? '—' }}</span>
+            <span v-if="birthYear" class="badge bg-success text-white">Born: {{ birthYear }}</span>
+            <span v-else class="badge bg-secondary">Born: —</span>
+            <span v-if="isDead && deathYear" class="badge bg-danger text-white">Died: {{ deathYear }}</span>
+            <span v-else-if="isDead" class="badge bg-danger text-white">Deceased</span>
+            <span v-else-if="!isLiving" class="badge bg-secondary">Status: Unknown</span>
           </div>
         </div>
       </div>
     </div>
 
     <div class="col-12">
-      <div class="card">
+      <div class="card border-primary">
+        <div class="card-header bg-primary text-white">
+          <h6 class="card-subtitle mb-0"><i class="bi bi-robot me-2"></i>AI Analysis</h6>
+        </div>
         <div class="card-body">
-          <h6 class="card-subtitle mb-2 text-muted">AI Analysis</h6>
-          <p class="mb-0">{{ aiExplanation }}</p>
+          <p class="mb-0">{{ aiExplanation || 'No AI analysis available.' }}</p>
         </div>
       </div>
     </div>

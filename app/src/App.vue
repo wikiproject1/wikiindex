@@ -5,6 +5,8 @@ import SearchBar from './components/SearchBar.vue'
 import ArticleCard from './components/ArticleCard.vue'
 import AnalysisPanel from './components/AnalysisPanel.vue'
 import LinksList from './components/LinksList.vue'
+import Recommendations from './components/Recommendations.vue'
+import { sampleAnalysis, sampleRecommendations } from './sampleData.js'
 
 const loading = ref(false)
 const article = ref({ title: '', summary: '', url: '' })
@@ -23,6 +25,7 @@ const analysis = ref({
   birth_year: null,
   is_stub: false,
 })
+const recommendations = ref([])
 
 async function fetchWikipedia(title) {
   try {
@@ -41,6 +44,7 @@ async function fetchWikipedia(title) {
       birth_year: null,
       is_stub: false,
     }
+    recommendations.value = []
 
     const summaryRes = await axios.get(
       `https://sw.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
@@ -59,7 +63,12 @@ async function fetchWikipedia(title) {
       analysis.value = resp.data
     } catch (e) {
       console.warn('Analysis backend not available yet')
+      // Set sample analysis data when backend is unavailable
+      analysis.value = sampleAnalysis
+      recommendations.value = sampleRecommendations
     }
+
+    recommendations.value = buildRecommendations(analysis.value, article.value)
   } catch (err) {
     console.error(err)
     article.value = { title: 'Haijapatikana', summary: 'Imeshindwa kupata makala.', url: '' }
@@ -76,6 +85,46 @@ function hashString(str) {
   }
   return h
 }
+
+function buildRecommendations(a, art) {
+  const recs = []
+  if (a.is_stub) {
+    recs.push('Makala imewekwa kama mbegu (stub) — ongeza maudhui na marejeo ya kuaminika.')
+  }
+  if (a.total_links_external <= 0) {
+    recs.push('Haina marejeo ya nje — ongeza vyanzo vya kuaminika.')
+  } else if (a.total_links_external < 3) {
+    recs.push(`Marejeo machache (${a.total_links_external}) — ongeza citations zaidi.`)
+  }
+  if (a.broken_links_count > 0) {
+    recs.push(`Rekebisha viungo vilivyovunjika (${a.broken_links_count}).`)
+  }
+  if (a.total_links_internal < 5) {
+    recs.push('Ongeza viungo vya ndani kwa makala zinazohusiana.')
+  }
+  if (typeof a.ai_content_risk === 'number') {
+    if (a.ai_content_risk >= 0.7) {
+      recs.push('Hatari kubwa ya mtindo wa AI — punguza maneno ya jumla, ongeza ushahidi.')
+    } else if (a.ai_content_risk >= 0.4) {
+      recs.push('Hatari ya kati ya mtindo wa AI — pitia uandishi na usomekeaji.')
+    }
+  }
+  if ((art.summary || '').length < 200) {
+    recs.push('Muhtasari ni mfupi — boresha dibaji (lead section).')
+  }
+  return recs
+}
+
+function loadDemoData() {
+  article.value = {
+    title: 'Costantino Castriota',
+    summary: 'Costantino Castriota Scanderbeg alikuwa mtemi wa Albania kutoka ukoo wa Kastrioti na prelati wa Kanisa Katoliki aliyewahi kuwa Askofu wa Isernia (1497-1500).',
+    url: 'https://sw.wikipedia.org/wiki/Costantino_Castriota'
+  }
+  score.value = 2
+  analysis.value = sampleAnalysis
+  recommendations.value = sampleRecommendations
+}
 </script>
 
 <template>
@@ -83,7 +132,7 @@ function hashString(str) {
     <nav class="navbar navbar-light bg-white border-bottom sticky-top">
       <div class="container">
         <span class="navbar-brand mb-0 h1 d-flex align-items-center">
-          <i class="bi bi-shield-check text-primary me-2"></i>
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Wikimedia-logo.png" alt="Wikimedia logo" style="height:28px;width:auto" class="me-2" />
           WikiTrust Index
         </span>
       </div>
@@ -91,6 +140,11 @@ function hashString(str) {
 
     <section class="container py-5 d-flex flex-column align-items-center">
       <SearchBar @analyze="fetchWikipedia" />
+      <div class="mt-3">
+        <button @click="loadDemoData" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-play-circle me-1"></i>Load Demo Data
+        </button>
+      </div>
     </section>
 
     <section class="container pb-5" style="max-width: 900px;">
@@ -112,6 +166,7 @@ function hashString(str) {
         :birth-year="analysis.birth_year"
         :is-stub="analysis.is_stub"
         :ai-explanation="analysis.ai_explanation"
+        :loading="loading"
       />
 
       <div class="row g-3 mt-0" v-if="analysis.internal_links?.length || analysis.external_links?.length">
@@ -120,6 +175,12 @@ function hashString(str) {
         </div>
         <div class="col-md-6">
           <LinksList title="External Links" :items="analysis.external_links" type="external" />
+        </div>
+      </div>
+
+      <div class="row g-3 mt-0">
+        <div class="col-12">
+          <Recommendations :items="recommendations" />
         </div>
       </div>
     </section>
