@@ -1,0 +1,7 @@
+name: wikitrustindex
+title: WikiTrust Index
+description: A comprehensive web application that analyzes Wikipedia articles for content quality, reliability, and trustworthiness
+repository: gitlab.wikimedia.org/toolforge-repos/wikitrustindex
+type: web
+backend: nodejs
+node_version: "18"
