@@ -6,7 +6,7 @@ import ArticleCard from './components/ArticleCard.vue'
 import AnalysisPanel from './components/AnalysisPanel.vue'
 import LinksList from './components/LinksList.vue'
 import Recommendations from './components/Recommendations.vue'
-import { sampleAnalysis, sampleRecommendations } from './sampleData.js'
+
 
 const loading = ref(false)
 const article = ref({ title: '', summary: '', url: '' })
@@ -46,26 +46,150 @@ async function fetchWikipedia(title) {
     }
     recommendations.value = []
 
-    const summaryRes = await axios.get(
-      `https://sw.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
-    )
-    const data = summaryRes.data
+    // Fetch article summary from Wikipedia REST API (try Swahili first, then English)
+    let summaryRes
+    let data
+    
+    try {
+      summaryRes = await axios.get(
+        `https://sw.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
+      )
+      data = summaryRes.data
+    } catch (e) {
+      console.warn('Swahili Wikipedia failed, trying English:', e)
+      try {
+        summaryRes = await axios.get(
+          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
+        )
+        data = summaryRes.data
+      } catch (e2) {
+        throw new Error('Article not found in Swahili or English Wikipedia')
+      }
+    }
+    
+    if (!data || !data.extract) {
+      throw new Error('No article content found')
+    }
+    
     article.value.title = data.title || title
     article.value.summary = data.extract || ''
     article.value.url = data.content_urls?.desktop?.page || data.content_urls?.mobile?.page || ''
 
-    // Placeholder trust score (deterministic from title)
-    score.value = Math.min(100, Math.max(0, (hashString(title) % 100)))
-
-    // Call backend analysis
+    // Fetch detailed data using MediaWiki Action API
+    const pageTitle = data.title || title
+    const wikiLang = data.lang || 'sw' // Use the language from the summary response
+    const wikiBase = wikiLang === 'sw' ? 'https://sw.wikipedia.org' : 'https://en.wikipedia.org'
+    
+    // Fetch categories, links, and other metadata with error handling
+    let categories = []
+    let internalLinks = []
+    let externalLinks = []
+    
     try {
-      const resp = await axios.post('http://127.0.0.1:8000/analyze', { title })
-      analysis.value = resp.data
+      const categoriesRes = await axios.get(`${wikiBase}/w/api.php`, {
+        params: {
+          action: 'query',
+          format: 'json',
+          formatversion: 2,
+          titles: pageTitle,
+          prop: 'categories',
+          clshow: '!hidden',
+          cllimit: 'max'
+        }
+      })
+      console.log('Categories response:', categoriesRes.data)
+      const pages = categoriesRes.data.query?.pages || []
+      if (pages.length > 0) {
+        const page = pages[0]
+        if (page.categories) {
+          categories = page.categories.map(cat => cat.title.replace('Category:', ''))
+        }
+      }
     } catch (e) {
-      console.warn('Analysis backend not available yet')
-      // Set sample analysis data when backend is unavailable
-      analysis.value = sampleAnalysis
-      recommendations.value = sampleRecommendations
+      console.warn('Failed to fetch categories:', e)
+      categories = []
+    }
+    
+    try {
+      const linksRes = await axios.get(`${wikiBase}/w/api.php`, {
+        params: {
+          action: 'query',
+          format: 'json',
+          formatversion: 2,
+          titles: pageTitle,
+          prop: 'links',
+          plnamespace: 0,
+          pllimit: 'max'
+        }
+      })
+      console.log('Links response:', linksRes.data)
+      const pages = linksRes.data.query?.pages || []
+      if (pages.length > 0) {
+        const page = pages[0]
+        if (page.links) {
+          internalLinks = page.links.map(link => link.title)
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch internal links:', e)
+      internalLinks = []
+    }
+    
+    try {
+      const extlinksRes = await axios.get(`${wikiBase}/w/api.php`, {
+        params: {
+          action: 'query',
+          format: 'json',
+          formatversion: 2,
+          titles: pageTitle,
+          prop: 'extlinks',
+          ellimit: 'max'
+        }
+      })
+      console.log('External links response:', extlinksRes.data)
+      const pages = extlinksRes.data.query?.pages || []
+      if (pages.length > 0) {
+        const page = pages[0]
+        if (page.extlinks) {
+          externalLinks = page.extlinks.map(link => link['*'])
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch external links:', e)
+      externalLinks = []
+    }
+
+
+
+    // Analyze categories for birth/death years and other metadata
+    const birthYear = extractBirthYear(categories)
+    const { isDead, deathYear } = extractDeathYear(categories)
+    const isLiving = detectLiving(categories)
+    const isStub = detectStub(categories)
+    
+    // Calculate AI content risk
+    const aiRisk = estimateAIContentRisk(article.value.summary)
+    
+    // Calculate trust score based on content quality
+    score.value = calculateTrustScore(article.value.summary, categories, internalLinks.length, externalLinks.length)
+
+    // Build analysis object with REAL data
+    analysis.value = {
+      ai_content_risk: aiRisk,
+      broken_links_count: 0, // We'll implement this later
+      broken_external_links: [],
+      content_type: 'article',
+      total_links_internal: internalLinks.length,
+      total_links_external: externalLinks.length,
+      internal_links: internalLinks,
+      external_links: externalLinks,
+      categories: categories,
+      is_living: isLiving,
+      is_dead: isDead,
+      death_year: deathYear,
+      birth_year: birthYear,
+      is_stub: isStub,
+      ai_explanation: generateAIExplanation(article.value.summary, categories, internalLinks.length, externalLinks.length, aiRisk, isStub, isLiving, isDead, birthYear, deathYear)
     }
 
     recommendations.value = buildRecommendations(analysis.value, article.value)
@@ -115,15 +239,109 @@ function buildRecommendations(a, art) {
   return recs
 }
 
-function loadDemoData() {
-  article.value = {
-    title: 'Costantino Castriota',
-    summary: 'Costantino Castriota Scanderbeg alikuwa mtemi wa Albania kutoka ukoo wa Kastrioti na prelati wa Kanisa Katoliki aliyewahi kuwa Askofu wa Isernia (1497-1500).',
-    url: 'https://sw.wikipedia.org/wiki/Costantino_Castriota'
+// Helper functions for data analysis
+function extractBirthYear(categories) {
+  for (const cat of categories) {
+    const match = cat.match(/(?:Waliozaliwa|Kuzaliwa)\s+(\d{3,4})$/i)
+    if (match) {
+      const year = parseInt(match[1])
+      if (year >= 1000 && year <= 2100) return year
+    }
   }
-  score.value = 2
-  analysis.value = sampleAnalysis
-  recommendations.value = sampleRecommendations
+  return null
+}
+
+function extractDeathYear(categories) {
+  for (const cat of categories) {
+    const match = cat.match(/(?:Waliofariki|Vifo vya)\s+(\d{3,4})$/i)
+    if (match) {
+      const year = parseInt(match[1])
+      if (year >= 1000 && year <= 2100) return { isDead: true, deathYear: year }
+    }
+  }
+  return { isDead: false, deathYear: null }
+}
+
+function detectLiving(categories) {
+  const livingPatterns = [/watu hai/i, /walio hai/i, /living people/i]
+  return categories.some(cat => livingPatterns.some(pattern => pattern.test(cat)))
+}
+
+function detectStub(categories) {
+  return categories.some(cat => /mbegu|stub/i.test(cat))
+}
+
+function estimateAIContentRisk(text) {
+  if (!text) return 0.0
+  const patterns = [
+    /as an ai language model/i,
+    /in conclusion,/i,
+    /this article aims to/i,
+    /it is important to note that/i,
+  ]
+  const hits = patterns.reduce((count, pattern) => count + (pattern.test(text) ? 1 : 0), 0)
+  const lengthPenalty = text.length < 200 ? 0.0 : Math.min(0.3, text.length / 5000)
+  return Math.min(1.0, hits * 0.25 + lengthPenalty)
+}
+
+function calculateTrustScore(summary, categories, internalLinks, externalLinks) {
+  let score = 50 // Base score
+  
+  // Bonus for longer summary
+  if (summary.length > 200) score += 10
+  if (summary.length > 500) score += 10
+  
+  // Bonus for more internal links
+  if (internalLinks > 10) score += 10
+  if (internalLinks > 20) score += 10
+  
+  // Bonus for external links
+  if (externalLinks > 0) score += 10
+  if (externalLinks > 5) score += 10
+  
+  // Penalty for stub
+  if (categories.some(cat => /mbegu|stub/i.test(cat))) score -= 15
+  
+  return Math.max(0, Math.min(100, score))
+}
+
+function generateAIExplanation(summary, categories, internalLinks, externalLinks, aiRisk, isStub, isLiving, isDead, birthYear, deathYear) {
+  const parts = []
+  
+  parts.push("This appears to be a standard encyclopedia article.")
+  
+  if (birthYear) {
+    parts.push(`The subject seems to have been born in ${birthYear}.`)
+  }
+  
+  if (isLiving) {
+    parts.push("Categories suggest the person is living.")
+  }
+  
+  if (isDead) {
+    parts.push("Categories indicate the subject is deceased.")
+  }
+  
+  if (isStub) {
+    parts.push("The article is categorized as a stub (mbegu); it may be incomplete.")
+  }
+  
+  parts.push(`There are about ${internalLinks} internal links and ${externalLinks} external links.`)
+  
+  if (aiRisk >= 0.7) {
+    parts.push("Text shows a high risk of AI-generated patterns.")
+  } else if (aiRisk >= 0.4) {
+    parts.push("Text shows a moderate risk of AI-generated patterns.")
+  } else {
+    parts.push("Low indications of AI-generated phrasing in summary.")
+  }
+  
+  return parts.join(" ")
+}
+
+function loadDemoData() {
+  // Load demo data for testing
+  fetchWikipedia('A-Q')
 }
 </script>
 
