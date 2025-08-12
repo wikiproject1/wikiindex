@@ -1,188 +1,152 @@
-# WikiTrust Index
+# WikiTrust Index (Swahili-first)
 
-A comprehensive Wikipedia article analysis tool that provides trust scores, AI content risk assessment, and detailed article metrics for Swahili Wikipedia articles.
+A lightweight, Swahili-first Wikipedia article analyzer.
 
-## 🌟 Features
+Frontend: Vue 3 + Vite + Bootstrap 5. Backend: FastAPI (Python). The app fetches a page summary from Swahili Wikipedia, computes heuristic AI-content risk, extracts categories, counts internal/external links, samples and checks external links for breakage, and surfaces a transparent explanation.
 
-### Article Analysis & Trust Scoring
-- **Trust Score**: 0-100% rating based on article quality indicators
-- **AI Content Risk**: Detects potential AI-generated content patterns
-- **Content Type**: Identifies article type (standard, disambiguation, redirect)
+---
 
-### Comprehensive Article Metrics
-- **Links Analysis**: Counts internal and external links
-- **Broken Links**: Identifies and counts broken external references
-- **Categories**: Full list of Wikipedia categories with smart parsing
-- **Birth/Death Information**: Extracts birth and death years from categories
-- **Living Status**: Detects if subject is living or deceased
-- **Stub Detection**: Identifies incomplete articles
+## Features
+- Swahili Wikipedia focus (`sw.wikipedia.org`)
+- Centered search and analysis flow
+- Article card: title, summary, external link, trust score bar
+- Live analysis panel:
+  - AI content risk (percentage)
+  - Content type
+  - Internal/External link counts
+  - Full internal/external links (clickable lists)
+  - Categories list
+  - Living/Deceased flags and Birth/Death year (from categories)
+  - Broken links: sampled external URLs checked and listed
+  - AI explanation (human-readable summary of findings)
 
-### AI-Powered Insights
-- **AI Analysis**: Detailed explanation of findings and patterns
-- **Smart Recommendations**: Actionable suggestions for article improvement
-- **Content Quality Assessment**: Heuristic-based quality scoring
+---
 
-### User Interface
-- **Modern Design**: Clean, responsive Bootstrap-based interface
-- **Real-time Analysis**: Instant results from Wikipedia API
-- **Demo Mode**: Test with sample data when backend is unavailable
-- **Loading States**: Visual feedback during analysis
+## Tech Stack
+- Frontend: Vue 3, Vite, Bootstrap 5, Bootstrap Icons, Axios
+- Backend: FastAPI, Uvicorn, HTTPX
+- OS target: Works on Windows (PowerShell), macOS, Linux
 
-## 🚀 Quick Start
+---
 
-### Prerequisites
-- Node.js 16+ and npm
-- Python 3.8+ and pip
+## Repository Layout
+```
+WikiTrust Index/
+├─ app/                    # Vue 3 + Vite frontend
+│  ├─ src/
+│  │  ├─ components/
+│  │  │  ├─ SearchBar.vue
+│  │  │  ├─ ArticleCard.vue
+│  │  │  ├─ TrustScoreBar.vue
+│  │  │  ├─ AnalysisPanel.vue
+│  │  │  └─ LinksList.vue
+│  │  ├─ App.vue
+│  │  ├─ main.js
+│  │  └─ style.css
+│  ├─ index.html
+│  ├─ package.json
+│  └─ vite.config.js
+└─ server/                 # FastAPI backend
+   ├─ main.py
+   └─ requirements.txt
+```
 
-### Frontend Setup
-```bash
+---
+
+## Prerequisites
+- Node.js 18+ and npm
+- Python 3.11+
+
+---
+
+## Quickstart (Local)
+
+### 1) Backend (FastAPI)
+```powershell
+cd server
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt
+.\.venv\Scripts\uvicorn main:app --reload --port 8000
+```
+- Server at `http://127.0.0.1:8000`
+
+### 2) Frontend (Vue + Vite)
+```powershell
 cd app
 npm install
 npm run dev
 ```
-
-### Backend Setup
-```bash
-cd server
-pip install -r requirements.txt
-python main.py
-```
-
-### Usage
-1. Open the frontend in your browser (usually http://localhost:5173)
-2. Enter a Wikipedia article title in Swahili
-3. Click "Analyze" to get comprehensive analysis
-4. Use "Load Demo Data" to test without backend
-
-## 🔧 How It Works
-
-### Frontend (Vue.js)
-- **SearchBar**: Article title input and search
-- **ArticleCard**: Displays article summary and trust score
-- **AnalysisPanel**: Shows detailed metrics and analysis
-- **LinksList**: Displays internal and external links
-- **Recommendations**: Provides improvement suggestions
-
-### Backend (FastAPI)
-- **Wikipedia API Integration**: Fetches article data and metadata
-- **MediaWiki Action API**: Extracts links, categories, and references
-- **AI Risk Detection**: Pattern-based AI content identification
-- **Link Validation**: Checks external link accessibility
-- **Smart Parsing**: Extracts birth/death years from categories
-
-### Data Flow
-1. User enters article title
-2. Frontend calls Wikipedia REST API for summary
-3. Backend analyzes article with MediaWiki Action API
-4. AI risk assessment and pattern detection
-5. Link validation and category parsing
-6. Comprehensive analysis results returned
-7. Frontend displays formatted results
-
-## 📊 Sample Analysis Results
-
-For the article "Costantino Castriota":
-
-- **Trust Score**: 2%
-- **AI Content Risk**: 2% (Low)
-- **Content Type**: Article
-- **Categories**: 9 categories including birth/death years
-- **Birth Year**: 1477
-- **Death Year**: 1500
-- **Status**: Deceased
-- **Stub**: Yes (incomplete article)
-- **Internal Links**: 12
-- **External Links**: 3
-
-## 🎯 Use Cases
-
-- **Wikipedia Editors**: Identify articles needing improvement
-- **Researchers**: Assess article quality and completeness
-- **Content Moderators**: Detect AI-generated content
-- **Students**: Evaluate source reliability
-- **Librarians**: Quality assessment for reference materials
-
-## 🔍 Technical Details
-
-### API Endpoints
-- `POST /analyze`: Main analysis endpoint
-- Input: `{"title": "article_title"}`
-- Output: Comprehensive analysis object
-
-### Data Models
-- **AnalyzeRequest**: Input validation
-- **AnalyzeResponse**: Structured analysis results
-- **Sample Data**: Fallback data for testing
-
-### Error Handling
-- Graceful fallback when backend unavailable
-- Sample data loading for demonstration
-- Comprehensive error logging
-
-## 🛠️ Development
-
-### Project Structure
-```
-WikiTrust Index/
-├── app/                 # Vue.js frontend
-│   ├── src/
-│   │   ├── components/ # Vue components
-│   │   ├── sampleData.js
-│   │   └── App.vue
-│   └── package.json
-├── server/              # FastAPI backend
-│   ├── main.py
-│   └── requirements.txt
-└── README.md
-```
-
-### Key Components
-- **AnalysisPanel**: Main metrics display
-- **LinksList**: Link management and display
-- **Recommendations**: AI-powered suggestions
-- **SearchBar**: Article search interface
-
-### Testing
-- Use "Load Demo Data" button for frontend testing
-- Backend can be tested independently
-- Sample data provides realistic test scenarios
-
-## 🌐 Supported Languages
-
-Currently optimized for **Swahili Wikipedia** with:
-- Swahili category parsing
-- Localized recommendations
-- Swahili Wikipedia API integration
-
-## 📈 Future Enhancements
-
-- Multi-language support
-- Advanced AI content detection
-- Historical analysis tracking
-- User authentication and saved analyses
-- API rate limiting and caching
-- Mobile app development
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is open source and available under the MIT License.
-
-## 🆘 Support
-
-For issues and questions:
-- Check the demo mode for interface testing
-- Review the sample data for expected results
-- Ensure both frontend and backend are running
-- Check browser console for error messages
+- Open Vite URL (typically `http://localhost:5173`)
 
 ---
 
-**WikiTrust Index** - Making Wikipedia articles more trustworthy, one analysis at a time.
+## Using the App
+1. Enter an article title in Swahili (e.g., "Tanzania", "Julius Nyerere")
+2. Click "Fetch & Analyze"
+3. Results show summary, Wikipedia link, Trust Score, analysis, and link lists
+
+---
+
+## API (Backend)
+Base: `http://127.0.0.1:8000`
+
+### POST `/analyze`
+Request
+```json
+{ "title": "Article Name" }
+```
+
+Response (fields)
+```json
+{
+  "title": "...",
+  "url": "...",
+  "ai_content_risk": 0.12,
+  "broken_links_count": 2,
+  "broken_external_links": ["https://..."],
+  "content_type": "article",
+  "total_links_internal": 12,
+  "total_links_external": 13,
+  "internal_links": ["..."],
+  "external_links": ["..."],
+  "categories": ["Jamii:..."],
+  "is_living": true,
+  "is_dead": false,
+  "death_year": null,
+  "birth_year": 1960,
+  "is_stub": false,
+  "ai_explanation": "This appears to be ..."
+}
+```
+
+Notes
+- `ai_content_risk` is heuristic (0–1). For stronger signals, integrate an LLM.
+- Broken links are a sample of external URLs (up to 15) probed via HEAD/GET.
+- Birth/Death detection uses Swahili/English category patterns.
+
+---
+
+## Configuration
+- Frontend expects backend at `http://127.0.0.1:8000` (update in `app/src/App.vue` if needed)
+
+---
+
+## Production
+- Frontend: `npm run build` → serve `app/dist`
+- Backend: `uvicorn main:app --host 0.0.0.0 --port 8000`
+
+---
+
+## Contact / Maintainer
+- Maintainer: AlvinDulle
+- Email: alvinchipmunk196@gmail.com
+- Phone/WhatsApp: +255-628-030-877
+
+Markdown examples:
+- Email: `[alvinchipmunk196@gmail.com](mailto:alvinchipmunk196@gmail.com)`
+- Phone: `[+255-628-030-877](tel:+255628030877)`
+
+---
+
+## License
+Add a `MIT`open sourcing.
