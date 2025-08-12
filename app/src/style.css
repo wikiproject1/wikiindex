@@ -1,0 +1,9 @@
+/* Minimal overrides to complement Bootstrap */
+body {
+  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.placeholder.col-6, .placeholder.col-7, .placeholder.col-8, .placeholder.col-10, .placeholder.col-12 {
+  display: inline-block;
+  height: 1em;
+}
