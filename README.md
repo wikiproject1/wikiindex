@@ -1,152 +1,60 @@
-# WikiTrust Index (Swahili-first)
+# Nuxt Starter Template
 
-A lightweight, Swahili-first Wikipedia article analyzer.
+[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
 
-Frontend: Vue 3 + Vite + Bootstrap 5. Backend: FastAPI (Python). The app fetches a page summary from Swahili Wikipedia, computes heuristic AI-content risk, extracts categories, counts internal/external links, samples and checks external links for breakage, and surfaces a transparent explanation.
+Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
 
----
+- [Live demo](https://starter-template.nuxt.dev/)
+- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
 
-## Features
-- Swahili Wikipedia focus (`sw.wikipedia.org`)
-- Centered search and analysis flow
-- Article card: title, summary, external link, trust score bar
-- Live analysis panel:
-  - AI content risk (percentage)
-  - Content type
-  - Internal/External link counts
-  - Full internal/external links (clickable lists)
-  - Categories list
-  - Living/Deceased flags and Birth/Death year (from categories)
-  - Broken links: sampled external URLs checked and listed
-  - AI explanation (human-readable summary of findings)
+<a href="https://starter-template.nuxt.dev/" target="_blank">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
+    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
+  </picture>
+</a>
 
----
+> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
 
-## Tech Stack
-- Frontend: Vue 3, Vite, Bootstrap 5, Bootstrap Icons, Axios
-- Backend: FastAPI, Uvicorn, HTTPX
-- OS target: Works on Windows (PowerShell), macOS, Linux
+## Quick Start
 
----
-
-## Repository Layout
-```
-WikiTrust Index/
-├─ app/                    # Vue 3 + Vite frontend
-│  ├─ src/
-│  │  ├─ components/
-│  │  │  ├─ SearchBar.vue
-│  │  │  ├─ ArticleCard.vue
-│  │  │  ├─ TrustScoreBar.vue
-│  │  │  ├─ AnalysisPanel.vue
-│  │  │  └─ LinksList.vue
-│  │  ├─ App.vue
-│  │  ├─ main.js
-│  │  └─ style.css
-│  ├─ index.html
-│  ├─ package.json
-│  └─ vite.config.js
-└─ server/                 # FastAPI backend
-   ├─ main.py
-   └─ requirements.txt
+```bash [Terminal]
+npm create nuxt@latest -- -t github:nuxt-ui-templates/starter
 ```
 
----
+## Deploy your own
 
-## Prerequisites
-- Node.js 18+ and npm
-- Python 3.11+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
 
----
+## Setup
 
-## Quickstart (Local)
+Make sure to install the dependencies:
 
-### 1) Backend (FastAPI)
-```powershell
-cd server
-python -m venv .venv
-.\.venv\Scripts\pip install -r requirements.txt
-.\.venv\Scripts\uvicorn main:app --reload --port 8000
-```
-- Server at `http://127.0.0.1:8000`
-
-### 2) Frontend (Vue + Vite)
-```powershell
-cd app
-npm install
-npm run dev
-```
-- Open Vite URL (typically `http://localhost:5173`)
-
----
-
-## Using the App
-1. Enter an article title in Swahili (e.g., "Tanzania", "Julius Nyerere")
-2. Click "Fetch & Analyze"
-3. Results show summary, Wikipedia link, Trust Score, analysis, and link lists
-
----
-
-## API (Backend)
-Base: `http://127.0.0.1:8000`
-
-### POST `/analyze`
-Request
-```json
-{ "title": "Article Name" }
+```bash
+pnpm install
 ```
 
-Response (fields)
-```json
-{
-  "title": "...",
-  "url": "...",
-  "ai_content_risk": 0.12,
-  "broken_links_count": 2,
-  "broken_external_links": ["https://..."],
-  "content_type": "article",
-  "total_links_internal": 12,
-  "total_links_external": 13,
-  "internal_links": ["..."],
-  "external_links": ["..."],
-  "categories": ["Jamii:..."],
-  "is_living": true,
-  "is_dead": false,
-  "death_year": null,
-  "birth_year": 1960,
-  "is_stub": false,
-  "ai_explanation": "This appears to be ..."
-}
+## Development Server
+
+Start the development server on `http://localhost:3000`:
+
+```bash
+pnpm dev
 ```
-
-Notes
-- `ai_content_risk` is heuristic (0–1). For stronger signals, integrate an LLM.
-- Broken links are a sample of external URLs (up to 15) probed via HEAD/GET.
-- Birth/Death detection uses Swahili/English category patterns.
-
----
-
-## Configuration
-- Frontend expects backend at `http://127.0.0.1:8000` (update in `app/src/App.vue` if needed)
-
----
 
 ## Production
-- Frontend: `npm run build` → serve `app/dist`
-- Backend: `uvicorn main:app --host 0.0.0.0 --port 8000`
 
----
+Build the application for production:
 
-## Contact / Maintainer
-- Maintainer: AlvinDulle
-- Email: alvinchipmunk196@gmail.com
-- Phone/WhatsApp: +255-628-030-877
+```bash
+pnpm build
+```
 
-Markdown examples:
-- Email: `[alvinchipmunk196@gmail.com](mailto:alvinchipmunk196@gmail.com)`
-- Phone: `[+255-628-030-877](tel:+255628030877)`
+Locally preview production build:
 
----
+```bash
+pnpm preview
+```
 
-## License
-Add a `MIT`open sourcing.
+Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
