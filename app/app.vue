@@ -11,6 +11,9 @@ const locale = ref<'en' | 'sw'>('en');
 const showModal = ref(false);
 const showMobileMenu = ref(false);
 
+const config = useRuntimeConfig();
+const apiBase = config.public.apiBase;
+
 const t = {
     en: {
         title: "WikiTrust Index",
@@ -108,7 +111,7 @@ const fetchSuggestions = async (val: string) => {
         return;
     }
     try {
-        const { data } = await useFetch(`http://localhost:8000/api/suggest?q=${encodeURIComponent(val)}`);
+        const { data } = await useFetch(`${apiBase}/api/suggest?q=${encodeURIComponent(val)}`);
         if (data.value) {
             suggestions.value = data.value as string[];
             showSuggestions.value = true;
@@ -141,7 +144,7 @@ const analyzeURL = async () => {
     showSuggestions.value = false;
 
     try {
-        const { data, error: fetchError } = await useFetch('http://localhost:8000/api/analyze', {
+        const { data, error: fetchError } = await useFetch(`${apiBase}/api/analyze`, {
             method: 'POST',
             body: { url: url.value }
         });
