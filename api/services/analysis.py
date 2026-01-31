@@ -155,22 +155,28 @@ class AnalysisService:
 
         # 6. Machine Translation Detection
         templates = sw_data.get("templates", [])
-        is_machine = any("Tafsiri ya mashine" in t or "Machine translated" in t for t in templates)
+        machine_indicators = [
+            "Tafsiri ya mashine", 
+            "Machine translated", 
+            "Tafsiri iliyosahihishwa", # Often used when machine translations are "touched up"
+            "AI-generated content"
+        ]
+        is_machine = any(any(ind.lower() in t.lower() for ind in machine_indicators) for t in templates)
         
         if is_machine:
             score -= 50
             signals.append(TrustSignal(
                 id="machine_translation",
                 title="Machine Translation Detected",
-                description="This article has been flagged as a machine/AI translation. This may violate community policies if not manually reviewed.",
+                description="This article has been flagged with a machine translation template. These articles often require significant manual correction for semantic accuracy.",
                 status="fail",
                 score_impact=-50
             ))
         else:
             signals.append(TrustSignal(
                 id="human_translation",
-                title="Verified Human Content",
-                description="No machine translation flags detected. Content likely manually curated.",
+                title="Likely Human-Curated",
+                description="No machine translation flags detected. The content structure suggests manual editing or verified translation.",
                 status="pass",
                 score_impact=0
             ))

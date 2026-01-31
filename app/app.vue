@@ -186,7 +186,7 @@ const analyzeURL = async () => {
         <nav class="hidden md:block">
           <ul class="flex items-center space-x-8 text-sm font-semibold text-slate-600">
             <li><button @click="showModal = true" class="hover:text-indigo-600 transition-colors">{{ t[locale].howItWorks }}</button></li>
-            <li><a href="#" class="hover:text-indigo-600 transition-colors">{{ t[locale].methodology }}</a></li>
+            <li><a href="https://meta.wikimedia.org/wiki/WikiTrust_Index/Methodology" target="_blank" class="hover:text-indigo-600 transition-colors">{{ t[locale].methodology }}</a></li>
             <li><a href="https://meta.wikimedia.org/wiki/Wikimedia_Community_Kilimanjaro" target="_blank" class="hover:text-indigo-600 transition-colors">{{ t[locale].community }}</a></li>
             <li>
                  <button @click="toggleLocale" class="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-all text-xs flex items-center gap-2">
@@ -266,10 +266,13 @@ const analyzeURL = async () => {
                     <button 
                         @click="analyzeURL"
                         :disabled="loading"
-                        class="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                        class="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-md hover:shadow-indigo-200 active:scale-95 flex items-center justify-center gap-2"
                     >
                         <span v-if="loading" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
                         <span v-else>{{ t[locale].analyze }}</span>
+                        <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
                     </button>
                 </div>
                 
@@ -286,6 +289,19 @@ const analyzeURL = async () => {
             
             <div v-if="error" class="max-w-2xl mx-auto mt-4 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm font-semibold">
                 {{ error }}
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="!result && !loading && !error" class="max-w-2xl mx-auto mt-16 animate-fade-in-up">
+                <div class="bg-indigo-50/50 rounded-3xl p-10 border border-indigo-100/50 text-center">
+                    <div class="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-6 text-3xl">
+                        🔍
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Ready to explore?</h3>
+                    <p class="text-slate-500 max-w-sm mx-auto">
+                        Insert a Swahili Wikipedia link or search for a topic above to generate a trust reliability index report.
+                    </p>
+                </div>
             </div>
         </div>
       </div>
