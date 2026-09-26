@@ -25,7 +25,9 @@ class WikimediaService:
             "pithumbsize": 500,
             "rvprop": "timestamp|user|comment",
             "rvlimit": 1,
-            "tllimit": 500
+            "tllimit": 500,
+            "ellimit": 500,
+            "iwlimit": 500
         }
         
         async with httpx.AsyncClient() as client:
@@ -53,6 +55,19 @@ class WikimediaService:
                     # Process Templates (for AI/Machine Detection)
                     templates = [t.get("title", "") for t in page.get("templates", [])]
                     page["templates"] = templates
+                    
+                    # Process External Links (References)
+                    extlinks = [link.get("*", "") for link in page.get("extlinks", [])]
+                    page["references"] = extlinks
+                    
+                    # Process Interwiki/Internal Links
+                    iwlinks = []
+                    for link in page.get("iwlinks", []):
+                        prefix = link.get("prefix", "")
+                        value = link.get("*", "")
+                        if prefix and value:
+                            iwlinks.append(f"{prefix}:{value}")
+                    page["internal_links"] = iwlinks
                     
                     # Image URL
                     page["image_url"] = page.get("thumbnail", {}).get("source") or page.get("original", {}).get("source")
@@ -100,7 +115,12 @@ class WikimediaService:
 
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.get(base_url, params=params, headers=self.headers, timeout=10.0)
+                response = await client.get(base_url, params=params, headers=self.headers, timeout=15.0)
+                response.raise_for_status()
+                text = response.text.strip()
+                if not text or not text.startswith("{"):
+                    print(f"Invalid response from langlinks API: {text[:200]}")
+                    return {"en": None, "count": 0, "sw_exists": (lang == "sw")}
                 data = response.json()
                 pages = data.get("query", {}).get("pages", {})
                 
@@ -115,14 +135,14 @@ class WikimediaService:
                         if link.get("lang") == "sw":
                             result["sw_exists"] = True
                 
-                # If we are searching ON sw wikipedia, sw_exists is obviously true
                 if lang == "sw":
                     result["sw_exists"] = True
-                    # The langlinks API doesn't include the current language in the result list
-                    # So we add 1 to the count
                     result["count"] += 1
                 
                 return result
+            except httpx.TimeoutException:
+                print(f"Timeout fetching langlinks for {title}")
+                return {"en": None, "count": 0, "sw_exists": (lang == "sw")}
             except Exception as e:
                 print(f"Error fetching langlinks: {e}")
                 return {"en": None, "count": 0, "sw_exists": (lang == "sw")}
@@ -132,7 +152,10 @@ class WikimediaService:
             parsed = urllib.parse.urlparse(url)
             path_parts = parsed.path.split("/wiki/")
             if len(path_parts) > 1:
-                return urllib.parse.unquote(path_parts[1])
+                title = urllib.parse.unquote(path_parts[1])
+                title = title.replace("_", " ")
+                title = title.split("#")[0]
+                return title
             return None
         except:
             return None

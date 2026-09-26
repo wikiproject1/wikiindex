@@ -7,17 +7,11 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS Configuration
-origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:4445",
-]
-
+# CORS Configuration - Allow all origins for development/XAMPP environment
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

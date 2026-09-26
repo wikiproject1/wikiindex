@@ -12,7 +12,21 @@ const showModal = ref(false);
 const showMobileMenu = ref(false);
 
 const config = useRuntimeConfig();
-const apiBase = config.public.apiBase;
+const apiBase = ref(config.public.apiBase);
+
+const getApiBase = () => {
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+            return `${window.location.protocol}//${hostname}:8000`;
+        }
+    }
+    return config.public.apiBase;
+};
+
+if (typeof window !== 'undefined') {
+    apiBase.value = getApiBase();
+}
 
 const t = {
     en: {
@@ -111,7 +125,9 @@ const fetchSuggestions = async (val: string) => {
         return;
     }
     try {
-        const { data } = await useFetch(`${apiBase}/api/suggest?q=${encodeURIComponent(val)}`);
+        const { data } = await useFetch(`${apiBase.value}/api/suggest?q=${encodeURIComponent(val)}`, {
+            server: false
+        });
         if (data.value) {
             suggestions.value = data.value as string[];
             showSuggestions.value = true;
@@ -144,25 +160,42 @@ const analyzeURL = async () => {
     showSuggestions.value = false;
 
     try {
-        const { data, error: fetchError } = await useFetch(`${apiBase}/api/analyze`, {
+        const { data, error: fetchError } = await useFetch(`${apiBase.value}/api/analyze`, {
             method: 'POST',
-            body: { url: url.value }
+            body: { url: url.value },
+            server: false
         });
 
         if (fetchError.value) {
-            error.value = "Failed to connect to analysis service.";
+            const statusCode = fetchError.value.statusCode;
+            const statusMessage = fetchError.value.statusMessage || '';
+            
+            if (statusCode === 0 || statusMessage.includes('Failed to fetch') || statusMessage.includes('NetworkError')) {
+                error.value = "Not connected to server. Please ensure the API server is running on port 8000.";
+            } else if (statusCode >= 500) {
+                error.value = `Server error (${statusCode}). The analysis service encountered an internal problem.`;
+            } else if (statusCode === 404) {
+                error.value = "API endpoint not found. Please check the server configuration.";
+            } else if (statusCode === 400) {
+                error.value = "Bad request. Please check the URL or article name you entered.";
+            } else {
+                error.value = `Failed to connect to analysis service. (Error ${statusCode}: ${statusMessage})`;
+            }
             console.error(fetchError.value);
         } else if (data.value && (data.value as any).error) {
              error.value = (data.value as any).error;
         } else {
             result.value = data.value;
-            // Scroll to results
             setTimeout(() => {
                 document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
             }, 100);
         }
-    } catch (e) {
-        error.value = "An unexpected error occurred.";
+    } catch (e: any) {
+        if (e?.message?.includes('fetch') || e?.message?.includes('network') || e?.name === 'NetworkError') {
+            error.value = "Not connected to server. Please ensure the API server is running on port 8000.";
+        } else {
+            error.value = "An unexpected error occurred. Please try again.";
+        }
         console.error(e);
     } finally {
         loading.value = false;
@@ -290,8 +323,20 @@ const analyzeURL = async () => {
                 </div>
             </div>
             
-            <div v-if="error" class="max-w-2xl mx-auto mt-4 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm font-semibold">
-                {{ error }}
+            <div v-if="error" class="max-w-2xl mx-auto mt-4">
+                <div class="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm font-semibold">
+                    <div class="flex items-start gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div class="flex-1">
+                            <p>{{ error }}</p>
+                            <p v-if="error.includes('Not connected to server')" class="mt-2 text-red-500 font-normal text-xs">
+                                💡 Start the API server by running: <code class="bg-red-100 px-1.5 py-0.5 rounded">npm run dev:api</code> or <code class="bg-red-100 px-1.5 py-0.5 rounded">pnpm dev:api</code> in the project folder.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Empty State -->
